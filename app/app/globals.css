@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**************************\
+  표준 reset + 모바일 안정화
+\**************************/
+/* Reset */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #__next { height: 100%; background: #f7f7f8; }
+img, picture, video, canvas, svg { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+/* Mobile tweaks */
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+body { overscroll-behavior: contain; -webkit-tap-highlight-color: transparent; }
+:root { --safe-top: env(safe-area-inset-top); --safe-right: env(safe-area-inset-right); --safe-bottom: env(safe-area-inset-bottom); --safe-left: env(safe-area-inset-left); }
+.app-shell { min-height: 100svh; padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left); }
+.screen-frame { position: relative; height: calc(100svh - var(--safe-top) - var(--safe-bottom)); display: grid; place-items: center; }
+.screen-img { height: 100%; width: auto; object-fit: contain; }
+.hotspot { position: absolute; inset: 0; }
+.hotspot__btn { position: absolute; border-radius: 12px; outline: none; background: transparent; border: none; }
