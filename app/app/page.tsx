@@ -8,16 +8,16 @@ import { saveScreenAsImage } from './lib/screenshot'
 const HS = {
   start: { left: 32, top: 46, width: 36, height: 10 },
   options: [
-    { left: 19, width: 62, top: 46, height: 5 },
-    { left: 19, width: 62, top: 52, height: 5 },
-    { left: 19, width: 62, top: 58, height: 6 },
-    { left: 19, width: 62, top: 65, height: 5 },
-    { left: 19, width: 62, top: 71, height: 5 },
+    { left: 19, width: 62, top: 45, height: 6 },
+    { left: 19, width: 62, top: 53, height: 6 },
+    { left: 19, width: 62, top: 61, height: 5 },
+    { left: 19, width: 62, top: 68, height: 6 },
+    { left: 19, width: 62, top: 76, height: 6 },
   ],
-  next:   { left: 25, top: 70, width: 50, height: 5 },
-  successSave: { left: 15,  top: 58, width: 71, height: 4 },
-  successHome: { left: 15,  top: 64, width: 71, height: 4 },
-  failureHome: { left: 15,  top: 57, width: 70, height: 6 },
+  next:   { left: 25, top: 74, width: 50, height: 6 },
+  successSave: { left: 15,  top: 60, width: 71, height: 5 },
+  successHome: { left: 15,  top: 67, width: 71, height: 5 },
+  failureHome: { left: 15,  top: 59, width: 70, height: 6 },
 } as const
 
 type Rect = {left:number; top:number; width:number; height:number}
@@ -48,6 +48,9 @@ function withKeyboard(onActivate: () => void) {
 type Mode = 'main' | 'quiz' | 'answer' | 'success' | 'failure'
 
 type Picked = { id: 1|2|3|4|5; correctIndex: 1|2|3|4|5; image: string; answerImageO: string; answerImageX: string }
+
+const SUCCESS_BG = 'linear-gradient(to bottom, #fafeff, #61b8e7)'
+const FAILURE_BG = '#ffffff'
 
 export default function Page() {
   const [mode, setMode] = useState<Mode>('main')
@@ -141,7 +144,7 @@ export default function Page() {
   if (mode === 'success') {
     const doSave = tap(() => saveScreenAsImage())
     return (
-      <Screen image="/assets/success.png" hotspots={
+      <Screen image="/assets/success.png" bg={SUCCESS_BG} hotspots={
         <>
           <button
             aria-label="내 앨범으로 저장"
@@ -165,7 +168,7 @@ export default function Page() {
   // 실패
   const goHome = tap(() => setMode('main'))
   return (
-    <Screen image="/assets/failure.png" hotspots={
+    <Screen image="/assets/failure.png" bg={FAILURE_BG} hotspots={
       <button
         aria-label="메인으로 돌아가기"
         className="hotspot__btn"

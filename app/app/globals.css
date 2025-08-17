@@ -1,10 +1,42 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* Reset */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #__next { height: 100%; background: #f7f7f8; }
+img, picture, video, canvas, svg { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+/* Mobile tweaks */
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; overflow: hidden; }
+:root { --safe-top: env(safe-area-inset-top); --safe-right: env(safe-area-inset-right); --safe-bottom: env(safe-area-inset-bottom); --safe-left: env(safe-area-inset-left); }
 
-/**************************\
-  표준 reset + 모바일 안정화
-\**************************/
+/* 뷰포트 단위: iOS Safari/폴더블 대응 (우선 100dvh, 미지원이면 100svh → 100vh) */
+.app-shell { min-height: 100dvh; padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left); display: grid; place-items: center; }
+@supports not (height: 100dvh) { .app-shell { min-height: 100svh; } }
+@supports not (height: 100svh) { .app-shell { min-height: 100vh; } }
+
+/* 가운데 정렬 스테이지 */
+.screen-frame { position: relative; width: 100vw; height: 100%; display: grid; place-items: center; }
+
+/* 이미지와 동일한 박스 크기(1152×2048)로 오버레이 정렬: 폴더블에서도 1:1 정렬 보장 */
+.fit-box {
+  position: relative;
+  aspect-ratio: 1152 / 2048;
+  /* 화면을 넘지 않는 최대 크기 계산 (object-contain과 동일한 박스 계산) */
+  width: min(100vw, calc(100dvh * (1152 / 2048)));
+  max-height: 100dvh;
+}
+@supports not (height: 100dvh) {
+  .fit-box { width: min(100vw, calc(100svh * (1152 / 2048))); max-height: 100svh; }
+}
+
+/* 이미지: fit-box를 꽉 채움 → 오버레이와 완전 동일 좌표계 */
+.screen-img { width: 100%; height: 100%; object-fit: fill; }
+
+/* 투명 클릭영역(Hotspot) */
+.hotspot { position: absolute; inset: 0; pointer-events: none; }
+.hotspot__btn { position: absolute; border-radius: 12px; outline: none; background: transparent; border: none; pointer-events: auto; }
+/* 개발 중 디버그용 */
+/* .hotspot__btn { outline: 1px dashed rgba(0,0,0,.15); background: rgba(255,0,0,.08); } */
+
 /* Reset */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body, #__next { height: 100%; background: #f7f7f8; }

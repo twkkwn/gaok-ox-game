@@ -4,7 +4,6 @@ import './globals.css'
 export const metadata: Metadata = {
   title: '퀴즈게임 | 식품의약품안전처',
   description: '모바일 퀴즈 OX 게임',
-  themeColor: '#f7f7f8',
 }
 
 export const viewport: Viewport = {
@@ -12,6 +11,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover', // iOS safe-area 사용을 명시
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
