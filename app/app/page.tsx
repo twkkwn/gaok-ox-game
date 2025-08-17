@@ -17,7 +17,7 @@ const HS = {
   next:   { left: 25, top: 70, width: 50, height: 5 },
   successSave: { left: 15,  top: 58, width: 71, height: 4 },
   successHome: { left: 15,  top: 64, width: 71, height: 4 },
-  failureHome: { left: 9,  top: 66, width: 82, height: 7 },
+  failureHome: { left: 15,  top: 57, width: 70, height: 6 },
 } as const
 
 type Rect = {left:number; top:number; width:number; height:number}
