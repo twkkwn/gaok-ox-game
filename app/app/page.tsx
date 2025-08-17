@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Screen from './components/Screen'
 import { ALL_QUESTIONS } from './data/questions'
 import { saveScreenAsImage } from './lib/screenshot'
@@ -46,11 +46,37 @@ function withKeyboard(onActivate: () => void) {
 }
 
 type Mode = 'main' | 'quiz' | 'answer' | 'success' | 'failure'
-
 type Picked = { id: 1|2|3|4|5; correctIndex: 1|2|3|4|5; image: string; answerImageO: string; answerImageX: string }
 
 const SUCCESS_BG = 'linear-gradient(to bottom, #fafeff, #61b8e7)'
 const FAILURE_BG = '#ffffff'
+
+// 1) 세션 ID
+function getSessionId() {
+  const k = 'quiz_session_id'
+  let s = localStorage.getItem(k)
+  if (!s) { s = (crypto?.randomUUID?.() ?? String(Date.now() + Math.random())); localStorage.setItem(k, s) }
+  return s
+}
+
+// 2) 로거 (서버로 fire-and-forget)
+async function logEvent(p: {
+  type: 'start' | 'served' | 'answer' | 'finish'
+  questionId?: number
+  correct?: boolean
+  result?: 'success' | 'failure'
+}) {
+  const meta = { userAgent: navigator.userAgent, platform: navigator.platform, vw: innerWidth, vh: innerHeight }
+  const sessionId = getSessionId()
+  fetch('/api/quiz/log', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({
+      eventType: p.type, sessionId,
+      questionId: p.questionId, correct: p.correct, result: p.result, meta
+    }),
+  }).catch(()=>{})
+}
 
 export default function Page() {
   const [mode, setMode] = useState<Mode>('main')
@@ -59,12 +85,25 @@ export default function Page() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
   const [score, setScore] = useState(0)
   const tap = useTapLock()
+  const servedSetRef = useRef<Set<number>>(new Set()) // 문제 served 중복 방지용
 
+  // 이미지 프리로드
   useEffect(() => {
-    const imgs = [ '/assets/main.png', '/assets/success.png', '/assets/failure.png', ...ALL_QUESTIONS.flatMap(q => [q.image, q.answerImageO, q.answerImageX]) ]
+    const imgs = ['/assets/main.png', '/assets/success.png', '/assets/failure.png', ...ALL_QUESTIONS.flatMap(q => [q.image, q.answerImageO, q.answerImageX])]
     imgs.forEach(src => { const im = new Image(); im.src = src })
   }, [])
+ 
+  // ✅ 문제 화면이 처음 표시될 때 served 로깅 (조건문 밖 최상위 useEffect)
+  useEffect(() => {
+    if (mode !== 'quiz' || !picked[i]) return
+    const id = picked[i].id
+    if (!servedSetRef.current.has(id)) {
+      servedSetRef.current.add(id)
+      logEvent({ type: 'served', questionId: id })
+    }
+  }, [mode, i, picked])
 
+  // ✅ 새 라운드 시작
   const newRound = tap(() => {
     const others = ALL_QUESTIONS.slice(1)
     for (let k = others.length - 1; k > 0; k--) { const r = Math.floor(Math.random() * (k + 1)); [others[k], others[r]] = [others[r], others[k]] }
@@ -73,9 +112,11 @@ export default function Page() {
     setI(0)
     setScore(0)
     setIsCorrect(null)
+    servedSetRef.current.clear()   // ✅ 새 라운드 때 출제 기록 초기화
     setMode('quiz')
   })
 
+  // ✅ 메인
   if (mode === 'main') {
     return (
       <Screen image="/assets/main.png" hotspots={
@@ -83,49 +124,56 @@ export default function Page() {
           aria-label="게임 시작"
           className="hotspot__btn"
           style={pct(HS.start)}
-          onClick={newRound}
+          onClick={tap(() => { newRound(); logEvent({ type: 'start' }) })}
           onKeyDown={withKeyboard(newRound)}
         />
       } />
     )
   }
 
-  if (mode === 'quiz') {
-    const q = picked[i]
-    return (
-      <Screen image={q.image} hotspots={
-        <div>
-          {HS.options.map((rect, idx) => (
-            <button
-              key={idx}
-              aria-label={`보기 ${idx+1}`}
-              className="hotspot__btn"
-              style={pct(rect)}
-              onClick={tap(() => {
-                const ok = (idx + 1) === q.correctIndex
-                setIsCorrect(ok)
-                setScore(s => s + (ok ? 1 : 0))
-                setMode('answer')
-              })}
-              onKeyDown={withKeyboard(() => {
-                const ok = (idx + 1) === q.correctIndex
-                setIsCorrect(ok)
-                setScore(s => s + (ok ? 1 : 0))
-                setMode('answer')
-              })}
-            />
-          ))}
-        </div>
-      } />
-    )
-  }
+  // 퀴즈
+   if (mode === 'quiz') {
+     const q = picked[i]
+     return (
+       <Screen image={q.image} hotspots={
+         <div>
+           {HS.options.map((rect, idx) => (
+             <button
+               key={idx}
+               aria-label={`보기 ${idx+1}`}
+               className="hotspot__btn"
+               style={pct(rect)}
+               onClick={tap(() => {
+                 const ok = (idx + 1) === q.correctIndex
+                 logEvent({ type: 'answer', questionId: q.id, correct: ok })
+                 setIsCorrect(ok)
+                 setScore(s => s + (ok ? 1 : 0))
+                 setMode('answer')
+               })}
+               onKeyDown={withKeyboard(() => {
+                 const ok = (idx + 1) === q.correctIndex
+                 setIsCorrect(ok)
+                 setScore(s => s + (ok ? 1 : 0))
+                 setMode('answer')
+               })}
+             />
+           ))}
+         </div>
+       } />
+     )
+   }
 
+   // 정답/오답 해설
   if (mode === 'answer') {
     const q = picked[i]
     const img = isCorrect ? q.answerImageO : q.answerImageX
     const goNext = tap(() => {
       if (i < 2) { setI(i + 1); setMode('quiz') }
-      else { setMode(score === 3 ? 'success' : 'failure') }
+      else { 
+        const isSuccess = score === 3   // (답변 처리 시 score 이미 반영)
+        logEvent({ type: 'finish', result: isSuccess ? 'success' : 'failure' })
+        setMode(isSuccess ? 'success' : 'failure')
+      }
     })
 
     return (
@@ -141,6 +189,7 @@ export default function Page() {
     )
   }
 
+  // 성공
   if (mode === 'success') {
     const doSave = tap(() => saveScreenAsImage())
     return (
