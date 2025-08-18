@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     const sheets = getSheets()
     const spreadsheetId = process.env.SPREADSHEET_ID!
     const res = await sheets.spreadsheets.values.get({ spreadsheetId, range: 'events!A:K' })
-    const rows: Row[] = ((res.data.values || []) as any[]).slice(1) as Row[]
+    const rows: Row[] = (res.data.values ?? []).slice(1) as string[][] as Row[]
 
     // 범위 필터 (date_kst 컬럼)
     const inRange = rows.filter(r => r[1] >= start && r[1] <= end)
@@ -126,8 +126,9 @@ export async function GET(req: Request) {
     const daily = Array.from(days.values()).sort((a,b)=> a.date.localeCompare(b.date))
 
     return NextResponse.json({ ok:true, range:{ start, end }, daily, overall })
-  } catch (e:any) {
-    console.error(e)
-    return NextResponse.json({ ok:false, error:e?.message ?? 'unknown' }, { status:500 })
+  } catch (e:unknown) {
+    console.error(e);
+    const message = e instanceof Error ? e.message : 'unknown';
+    return NextResponse.json({ ok:false, error: message }, { status:500 })
   }
 }

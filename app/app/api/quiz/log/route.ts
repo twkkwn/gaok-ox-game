@@ -55,8 +55,9 @@ export async function POST(req: Request) {
       requestBody: { values },
     })
     return NextResponse.json({ ok: true })
-  } catch (e: any) {
-    console.error(e)
-    return NextResponse.json({ ok: false, error: e?.message ?? 'unknown' }, { status: 500 })
-  }
+  } catch (e: unknown) {
+      console.error(e);
+      const message = e instanceof Error ? e.message : 'unknown';
+      return NextResponse.json({ ok:false, error: message }, { status:500 });
+    }
 }
