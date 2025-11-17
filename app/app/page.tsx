@@ -42,7 +42,7 @@ function withKeyboard(onActivate: () => void) {
 }
 
 type Mode = 'main' | 'quiz' | 'answer' | 'success' | 'failure'
-type Picked = { id: 1|2|3|4|5; correctIndex: 1|2|3|4|5; image: string; answerImageO: string; answerImageX: string }
+type Picked = { id: 1|2|3|4|5; correctIndex: 1|2; image: string; answerImageO: string; answerImageX: string }
 
 const SUCCESS_BG = '#ffffff'
 const FAILURE_BG = '#ffffff'
@@ -99,8 +99,8 @@ export default function Page() {
     }
   }, [mode, i, picked])
 
-  // ✅ 새 라운드 시작
-  const newRound = tap(() => {
+// ✅ 새 라운드 시작 (plain function; 호출 지점에서 tap으로 보호)
+  const newRound = () => {
     const others = ALL_QUESTIONS.slice(1)
     for (let k = others.length - 1; k > 0; k--) { const r = Math.floor(Math.random() * (k + 1)); [others[k], others[r]] = [others[r], others[k]] }
     const selected = [ALL_QUESTIONS[0], ...others.slice(0, 2)] as Picked[]
@@ -110,7 +110,7 @@ export default function Page() {
     setIsCorrect(null)
     servedSetRef.current.clear()   // ✅ 새 라운드 때 출제 기록 초기화
     setMode('quiz')
-  })
+  }
 
   // ✅ 메인
   if (mode === 'main') {
