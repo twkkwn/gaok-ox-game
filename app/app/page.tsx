@@ -44,7 +44,7 @@ function withKeyboard(onActivate: () => void) {
 type Mode = 'main' | 'quiz' | 'answer' | 'success' | 'failure'
 type Picked = { id: 1|2|3|4|5; correctIndex: 1|2|3|4|5; image: string; answerImageO: string; answerImageX: string }
 
-const SUCCESS_BG = 'linear-gradient(to bottom, #6D99F8, #E8EEFF, #AFC8FF)'
+const SUCCESS_BG = '#ffffff'
 const FAILURE_BG = '#ffffff'
 
 // 1) 세션 ID
